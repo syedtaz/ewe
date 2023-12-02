@@ -1,0 +1,4 @@
+(executable
+ (public_name ewe)
+ (name main)
+ (libraries ewe core async))
