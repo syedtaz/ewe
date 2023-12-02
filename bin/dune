@@ -1,4 +1,4 @@
 (executable
  (public_name ewe)
  (name main)
- (libraries ewe core async))
+ (libraries ewe core async bonsai))
