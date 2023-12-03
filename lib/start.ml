@@ -2,7 +2,7 @@
 
 (** Goals for this implementation:
     [x] Loop forever until SIGKILL.
-    [X] Track frames and aim for 60 fps. *)
+    [x] Track frames and aim for 60 fps. *)
 
 open! Core
 open! Async
@@ -21,6 +21,7 @@ module Termutils = struct
   (** [erasel_till_cursor_reset] clears the current line from the starting column upto the cursor and moves the cursor back. *)
   let erasel_till_cursor_reset = "\x1b[1K\r"
 
+  (** [noop] is () -> (). *)
   let noop () = ()
 end
 
@@ -30,11 +31,13 @@ module Frames = struct
 
   (** [nframes] and [nframes_w] form an incremental variable that holds the number of frames. *)
   let nframes = Var.create St.State.t 0
-
   let nframes_w = Var.watch nframes
+
+  (** [count] and [count_o] is the string representation of [nframes]. *)
   let count = map nframes_w ~f:(fun x -> string_of_int x)
   let count_o = observe count
 
+  (** [update_view] prints the stabilized value of [nframes] to standard output. *)
   let update_view () =
     let stdout = force Writer.stdout in
     Writer.write
