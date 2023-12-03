@@ -2,7 +2,8 @@
 
 (** Goals for this implementation:
     [x] Loop forever until SIGKILL.
-    [x] Track frames and aim for 60 fps. *)
+    [x] Track frames and aim for 60 fps.
+    [ ] Simple VDom diffing. *)
 
 open! Core
 open! Async
@@ -21,6 +22,11 @@ module Termutils = struct
   (** [erasel_till_cursor_reset] clears the current line from the starting column upto the cursor and moves the cursor back. *)
   let erasel_till_cursor_reset = "\x1b[1K\r"
 
+  (** [erasel] clears the current line. *)
+  let erasel = "\x1b[2K"
+
+  let move_cursor (y, x) = Format.sprintf "\x1b[%d;%dH" y x
+
   (** [noop] is () -> (). *)
   let noop () = ()
 end
@@ -33,21 +39,24 @@ module Frames = struct
   let nframes = Var.create St.State.t 0
 
   let nframes_w = Var.watch nframes
-
-  (** [count] and [count_o] is the string representation of [nframes]. *)
-  let count =
-    map nframes_w ~f:(fun x ->
-      Format.sprintf
-        "%sThe number of frames ticked is %s"
-        Termutils.erasel_till_cursor_reset
-        (string_of_int x))
-  ;;
-
-  let count_o = observe count
+  let nframes_o = observe nframes_w
+  let count_rem = map nframes_w ~f:(fun x -> x / 50)
+  let count_rem_o = observe count_rem
   let stdout = force Writer.stdout
+  let fticker = Dom.fticker
+  let sticker = Dom.sticker
 
   (** [update_view] prints the stabilized value of [nframes] to standard output. *)
-  let update_view () = Writer.write stdout (Observer.value_exn count_o)
+  let update_view () =
+    let out =
+      Format.sprintf
+        "%sFrame number: %d\t Cutoff number: %d"
+        Termutils.erasel_till_cursor_reset
+        (Observer.value_exn nframes_o)
+        (Observer.value_exn count_rem_o * 50)
+    in
+    Writer.write stdout out
+  ;;
 
   (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)
   let ticker () =
