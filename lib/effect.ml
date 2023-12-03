@@ -12,7 +12,7 @@ module Effect = struct
     | None -> raise (Invalid_argument "Nothing in queue.")
     | Some(eff, v) -> match eff with
       | Ignore -> return ()
-      | Callback (f : 'a -> unit) -> return (f v)
+      | Callback f -> return (f v)
 
   let perform_all_exn queue =
     let iterator = List.init (Deque.length queue) ~f:(fun _ -> ()) in
