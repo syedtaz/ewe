@@ -9,28 +9,6 @@ open! Core
 open! Async
 open! Incremental
 
-module Termutils = struct
-  (** [hcursor] hides the cursor. *)
-  let hcursor writer = Writer.write writer "\x1b[?25l"
-
-  (** [delete] moves the cursor one column back. *)
-  let delete = "\x1b[1D"
-
-  (** [erasel_till_cursor] clears the current line from the starting column upto the cursor. *)
-  let erasel_till_cursor = "\x1b[1K"
-
-  (** [erasel_till_cursor_reset] clears the current line from the starting column upto the cursor and moves the cursor back. *)
-  let erasel_till_cursor_reset = "\x1b[1K\r"
-
-  (** [erasel] clears the current line. *)
-  let erasel = "\x1b[2K"
-
-  let move_cursor (y, x) = Format.sprintf "\x1b[%d;%dH" y x
-
-  (** [noop] is () -> (). *)
-  let noop () = ()
-end
-
 module Frames = struct
   open Async
   module St = Make ()
@@ -48,14 +26,9 @@ module Frames = struct
 
   (** [update_view] prints the stabilized value of [nframes] to standard output. *)
   let update_view () =
-    let out =
-      Format.sprintf
-        "%sFrame number: %d\t Cutoff number: %d"
-        Termutils.erasel_till_cursor_reset
-        (Observer.value_exn nframes_o)
-        (Observer.value_exn count_rem_o * 50)
-    in
-    Writer.write stdout out
+    Dom.paint ~repaint:true stdout fticker (Var.value nframes);
+    Writer.write stdout " < -- > ";
+    Dom.paint stdout sticker (Var.value nframes)
   ;;
 
   (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)

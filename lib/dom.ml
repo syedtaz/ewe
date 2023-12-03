@@ -18,14 +18,18 @@ let diff node prev next =
   if String.equal res res' then None else Some res'
 ;;
 
-let repaint stdout { position = y, x; content = f; tag = _ } v =
-  let payload = Start.Termutils.move_cursor (y, x) ^ Start.Termutils.erasel ^ f v in
+let paint ?repaint stdout { position = y, x; content = f; tag = _ } v =
+  let payload =
+    if Option.value repaint ~default:false
+    then Termutils.move_cursor (y, x) ^ Termutils.erasel ^ f v
+    else f v
+  in
   Writer.write stdout payload
 ;;
 
 let fticker =
   { tag = "fticker"
-  ; position = 0, 0
+  ; position = 1, 0
   ; content = (fun x -> Format.sprintf "Frame number: %d" x)
   }
 ;;
@@ -33,6 +37,6 @@ let fticker =
 let sticker =
   { tag = "sticker"
   ; position = 1, 0
-  ; content = (fun x -> Format.sprintf "Cutoff number: %d" x)
+  ; content = (fun x -> Format.sprintf "Cutoff number: %d" ((x / 50) * 50))
   }
 ;;
