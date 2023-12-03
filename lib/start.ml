@@ -31,22 +31,23 @@ module Frames = struct
 
   (** [nframes] and [nframes_w] form an incremental variable that holds the number of frames. *)
   let nframes = Var.create St.State.t 0
+
   let nframes_w = Var.watch nframes
 
   (** [count] and [count_o] is the string representation of [nframes]. *)
-  let count = map nframes_w ~f:(fun x -> string_of_int x)
+  let count =
+    map nframes_w ~f:(fun x ->
+      Format.sprintf
+        "%sThe number of frames ticked is %s"
+        Termutils.erasel_till_cursor_reset
+        (string_of_int x))
+  ;;
+
   let count_o = observe count
+  let stdout = force Writer.stdout
 
   (** [update_view] prints the stabilized value of [nframes] to standard output. *)
-  let update_view () =
-    let stdout = force Writer.stdout in
-    Writer.write
-      stdout
-      (Format.sprintf
-         "%sThe number of frames ticked is %s"
-         Termutils.erasel_till_cursor_reset
-         (Observer.value_exn count_o))
-  ;;
+  let update_view () = Writer.write stdout (Observer.value_exn count_o)
 
   (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)
   let ticker () =
