@@ -24,12 +24,11 @@ module Frames = struct
   let fticker = Dom.fticker
   let sticker = Dom.sticker
 
-  (** [update_view] prints the stabilized value of [nframes] to standard output. *)
-  let update_view () =
-    Dom.paint ~repaint:true stdout fticker (Var.value nframes);
-    Writer.write stdout " < -- > ";
-    Dom.paint stdout sticker (Var.value nframes)
-  ;;
+  let eff_scheduler : (int Effect.t * int) Deque.t = Effect.create ()
+
+  let paint_f = Effect.Callback (fun y -> Dom.paint ~repaint:true stdout fticker y)
+  let paint_g = Effect.Callback (fun y -> Dom.paint stdout sticker y)
+  let paint_gap = Effect.Callback (fun _ -> Writer.write stdout " < -- > ")
 
   (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)
   let ticker () =
@@ -40,7 +39,10 @@ module Frames = struct
         let temp = Var.value nframes + 1 in
         Var.set nframes temp;
         stabilize St.State.t;
-        update_view ())
+        Effect.schedule (paint_f, Var.value nframes) eff_scheduler;
+        Effect.schedule (paint_gap, 0) eff_scheduler;
+        Effect.schedule (paint_g, Var.value nframes) eff_scheduler;
+        Effect.perform_all_exn eff_scheduler)
   ;;
 end
 
