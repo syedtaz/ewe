@@ -12,6 +12,7 @@ open! Incremental
 module Frames = struct
   open Async
   module St = Make ()
+  type obs = (int, St.state_witness) Observer.t
 
   (** [nframes] and [nframes_w] form an incremental variable that holds the number of frames. *)
   let nframes = Var.create St.State.t 0
@@ -24,11 +25,10 @@ module Frames = struct
   let fticker = Dom.fticker
   let sticker = Dom.sticker
 
-  let eff_scheduler : (int Effect.t * int) Deque.t = Effect.create ()
+  let eff_scheduler : (obs Effect.t * obs) Deque.t = Effect.create ()
 
-  let paint_f = Effect.Callback (fun y -> Dom.paint ~repaint:true stdout fticker y)
-  let paint_gap = Effect.Callback (fun _ -> Writer.write stdout " < -- > ")
-  let paint_g = Effect.Callback (fun y -> Dom.paint stdout sticker y)
+  let paint_f = Effect.Callback (fun y -> Dom.paint ~repaint:true stdout fticker (Observer.value_exn y); Writer.write stdout " < -- > ")
+  let paint_g = Effect.Callback (fun y -> Dom.paint stdout sticker (Observer.value_exn y))
 
   (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)
   let ticker () =
@@ -38,11 +38,9 @@ module Frames = struct
       (fun () ->
         let temp = Var.value nframes + 1 in
         Var.set nframes temp;
-        stabilize St.State.t;
-        Effect.schedule (paint_f, Observer.value_exn nframes_o) eff_scheduler;
-        Effect.schedule (paint_gap, 0) eff_scheduler;
-        Effect.schedule (paint_g, Observer.value_exn truncframes_o) eff_scheduler;
-        Effect.perform_all_exn eff_scheduler)
+        Effect.schedule (paint_f, nframes_o) eff_scheduler;
+        Effect.schedule (paint_g, truncframes_o) eff_scheduler;
+        Effect.perform_all_exn eff_scheduler St.State.t)
   ;;
 end
 
