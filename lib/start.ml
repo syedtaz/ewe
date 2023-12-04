@@ -3,6 +3,7 @@
 (** Goals for this implementation:
     [x] Loop forever until SIGKILL.
     [x] Track frames and aim for 60 fps.
+    [ ] Effect queue on separate loop.
     [ ] Simple VDom diffing. *)
 
 open! Core
@@ -11,36 +12,52 @@ open! Incremental
 
 module Frames = struct
   open Async
+  open Effect
   module St = Make ()
+
   type obs = (int, St.state_witness) Observer.t
 
-  (** [nframes] and [nframes_w] form an incremental variable that holds the number of frames. *)
-  let nframes = Var.create St.State.t 0
-  let nframes_w = Var.watch nframes
-  let nframes_o = observe nframes_w
-  let truncframes = map nframes_w ~f:(fun x -> (x / 50) * 50)
-  let truncframes_o = observe truncframes
+  (** [init_incr] will initialize a variable to keep track of the frame rate alongside the
+      incremental nodes that depend on the frame rate. *)
+  let init_incr () =
+    let nframes = Var.create St.State.t 0 in
+    let nframes_w = Var.watch nframes in
+    let nframes_o = observe nframes_w in
+    let truncframes = map nframes_w ~f:(fun x -> x / 50 * 50) in
+    let truncframes_o = observe truncframes in
+    nframes, nframes_o, truncframes_o
+  ;;
 
+  (* Components *)
   let stdout = force Writer.stdout
+
   let fticker = Dom.fticker
-  let sticker = Dom.sticker
+  and sticker = Dom.sticker
 
-  let eff_scheduler : (obs Effect.t * obs) Deque.t = Effect.create ()
+  (** [eff_scheduler] is queue that keeps track of effectful functions. *)
+  let eff_scheduler = EffectQueue.create St.State.t
 
-  let paint_f = Effect.Callback (fun y -> Dom.paint ~repaint:true stdout fticker (Observer.value_exn y); Writer.write stdout " < -- > ")
-  let paint_g = Effect.Callback (fun y -> Dom.paint stdout sticker (Observer.value_exn y))
+  (** [paint_f] and [paint_g] are helper functions for writing to stdout. *)
+  let paint_f =
+    Effect.Fun
+      (fun y ->
+        Dom.paint ~repaint:true stdout fticker (Observer.value_exn y);
+        Writer.write stdout " < -- > ")
+
+  and paint_g = Effect.Fun (fun y -> Dom.paint stdout sticker (Observer.value_exn y))
 
   (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)
   let ticker () =
+    let nframes, nframes_o, truncframes_o = init_incr () in
     let framerate = 60.0 in
     Clock.every
       (sec (1. /. framerate))
       (fun () ->
         let temp = Var.value nframes + 1 in
         Var.set nframes temp;
-        Effect.schedule (paint_f, nframes_o) eff_scheduler;
-        Effect.schedule (paint_g, truncframes_o) eff_scheduler;
-        Effect.perform_all_exn eff_scheduler St.State.t)
+        EffectQueue.schedule (paint_f, nframes_o) St.State.t eff_scheduler;
+        EffectQueue.schedule (paint_g, truncframes_o) St.State.t eff_scheduler;
+        EffectQueue.perform_all_exn St.State.t eff_scheduler)
   ;;
 end
 

@@ -37,6 +37,6 @@ let fticker =
 let sticker =
   { tag = "sticker"
   ; position = 1, 0
-  ; content = (fun x -> Format.sprintf "Cutoff number: %d" ((x / 50) * 50))
+  ; content = (fun x -> Format.sprintf "Cutoff number: %d" (x / 50 * 50))
   }
 ;;
