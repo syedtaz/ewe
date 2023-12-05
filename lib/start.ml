@@ -13,19 +13,21 @@ open! Incremental
 module Frames = struct
   open Async
   open Effect
-  module St = Make ()
 
-  type obs = (int, St.state_witness) Observer.t
+  type 'a t =
+    { nframes : (int, 'a) Var.t
+    ; nframes_o : (int, 'a) Observer.t
+    ; truncframes_o : (int, 'a) Observer.t }
 
   (** [init_incr] will initialize a variable to keep track of the frame rate alongside the
       incremental nodes that depend on the frame rate. *)
-  let init_incr () =
-    let nframes = Var.create St.State.t 0 in
+  let init_incr state : 'a t =
+    let nframes = Var.create state 0 in
     let nframes_w = Var.watch nframes in
     let nframes_o = observe nframes_w in
     let truncframes = map nframes_w ~f:(fun x -> x / 50 * 50) in
     let truncframes_o = observe truncframes in
-    nframes, nframes_o, truncframes_o
+    { nframes = nframes; nframes_o = nframes_o; truncframes_o = truncframes_o}
   ;;
 
   (* Components *)
@@ -34,38 +36,34 @@ module Frames = struct
   let fticker = Dom.fticker
   and sticker = Dom.sticker
 
-  (** [eff_scheduler] is queue that keeps track of effectful functions. *)
-  let eff_scheduler = EffectQueue.create St.State.t
-
   (** [paint_f] and [paint_g] are helper functions for writing to stdout. *)
-  let paint_f =
+  let paint_f { nframes_o = obs; _ } =
     Effect.Fun
-      (fun y ->
-        Dom.paint ~repaint:true stdout fticker (Observer.value_exn y);
+      (fun () ->
+        Dom.paint ~repaint:true stdout fticker (Observer.value_exn obs);
         Writer.write stdout " < -- > ")
+  ;;
 
-  and paint_g = Effect.Fun (fun y -> Dom.paint stdout sticker (Observer.value_exn y))
+  let paint_g { truncframes_o = obs; _ } =
+    Effect.Fun (fun () -> Dom.paint stdout sticker (Observer.value_exn obs))
+  ;;
 
-  (** [ticker] ticks every 16.67ms and updates the [nframes] variable. *)
-  let ticker () =
-    let nframes, nframes_o, truncframes_o = init_incr () in
+  let ticker frame_t queue =
     let framerate = 60.0 in
-    Clock.every
+    Async.Clock.every
       (sec (1. /. framerate))
       (fun () ->
-        let temp = Var.value nframes + 1 in
-        Var.set nframes temp;
-        EffectQueue.schedule (paint_f, nframes_o) St.State.t eff_scheduler;
-        EffectQueue.schedule (paint_g, truncframes_o) St.State.t eff_scheduler;
-        EffectQueue.perform_all_exn St.State.t eff_scheduler)
-  ;;
+        let temp = Incremental.Var.value frame_t.nframes + 1 in
+        Incremental.Var.set frame_t.nframes temp;
+        Queue.schedule (paint_f frame_t) queue;
+        Queue.schedule (paint_g frame_t) queue;)
 end
 
 (** [on_startup] sets the state of the terminal at the beginning of the app.
     This includes hiding the cursor and disabling canonincal and echo mode.
     Takes an arbitrary function [f] that can be used to schedule user defined
     (possibly side-effecting) functions before the app begins properly.*)
-let on_startup f : unit =
+let on_startup f =
   let open Core_unix in
   let stdout = force Writer.stdout in
   let fd = File_descr.of_int 0 in
@@ -77,8 +75,11 @@ let on_startup f : unit =
   f ()
 ;;
 
+module St = Make ()
+
 let start () =
-  on_startup Termutils.noop;
-  Frames.ticker ();
+  let (frame_t, queue) = on_startup (fun () -> (Frames.init_incr St.State.t, Effect.Queue.create ())) in
+  Effect.Queue.ticker St.State.t queue;
+  Frames.ticker frame_t queue;
   never_returns (Scheduler.go ())
 ;;

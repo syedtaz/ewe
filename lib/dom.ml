@@ -29,14 +29,14 @@ let paint ?repaint stdout { position = y, x; content = f; tag = _ } v =
 
 let fticker =
   { tag = "fticker"
-  ; position = 1, 0
+  ; position = 0, 0
   ; content = (fun x -> Format.sprintf "Frame number: %d" x)
   }
 ;;
 
 let sticker =
   { tag = "sticker"
-  ; position = 1, 0
+  ; position = 0, 0
   ; content = (fun x -> Format.sprintf "Cutoff number: %d" (x / 50 * 50))
   }
 ;;
