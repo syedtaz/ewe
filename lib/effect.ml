@@ -25,8 +25,7 @@ module Queue = struct
        | Fun f -> return (f ()))
   ;;
 
-  let perform_all_exn state queue =
-    Incremental.stabilize state;
+  let perform_all_exn queue =
     let iterator = List.init (Deque.length queue) ~f:(fun _ -> ()) in
     List.iter iterator ~f:(fun _ -> ignore (perform_exn queue >>| fun _ -> ()))
   ;;
@@ -39,7 +38,8 @@ module Queue = struct
       (fun () ->
         let temp = Incremental.Var.value nframes + 1 in
         Incremental.Var.set nframes temp;
-        perform_all_exn st queue)
+        Incremental.stabilize st;
+        perform_all_exn queue)
   ;;
 end
 
