@@ -13,8 +13,6 @@ open! Incremental
 
 let stdout = force Writer.stdout
 
-
-
 module Frames = struct
   open Async
   open Incremental
@@ -30,6 +28,7 @@ module Frames = struct
       Incremental.Var.set model (Model.of_tuple (Action.apply `SIGWINCH));
       stabilize st;
       Writer.write stdout (Observer.value_exn model_o))
+  ;;
 end
 
 (** [on_startup] sets the state of the terminal at the beginning of the app.

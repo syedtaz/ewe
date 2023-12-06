@@ -1,7 +1,6 @@
 open Async
 
 module Termutils = struct
-
   (** [tsize] uses ioctl to get the number of rows and columns of the current window. *)
   external tsize : unit -> int * int = "tsize"
 
