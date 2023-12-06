@@ -21,30 +21,21 @@ module Frames = struct
   open Incremental.Let_syntax
 
   let tick st =
-    (* Define incremental to track current size. *)
     let r_init, c_init = tsize () in
-    let termsize = Var.create st (r_init, c_init) in
+    let termsize = Var.create st (Model.Text.of_tuple (r_init, c_init)) in
     let termsize_w = Var.watch termsize in
-    (* Define effectful incremental to print current size. *)
-    let termsize_eff =
-      let%map r, c = termsize_w in
-      Incremental.return
-        st
-        (Writer.write
-           stdout
-           (Termutils.move_cursor (0, 0)
-            ^ Termutils.erasel
-            ^ Format.sprintf "(number of rows %d and number of cols %d)" r c))
+    let termstring = Model.view termsize_w in
+    let _ = observe termstring in
+    let termstring_eff =
+      let%map x = termstring in
+      Writer.write stdout x
     in
-    let _ = observe termsize_eff in
-    (* Override signal handler to get+set current
-       terminal size when signal is received. *)
+    let _ = observe termstring_eff in
     let sigwinch = Signal.of_caml_int 28 in
     Signal.handle [ sigwinch ] ~f:(fun _ ->
       let size = tsize () in
-      Incremental.Var.set termsize size;
+      Incremental.Var.set termsize (Model.Text.of_tuple size);
       stabilize st)
-  ;;
 end
 
 (** [on_startup] sets the state of the terminal at the beginning of the app.
