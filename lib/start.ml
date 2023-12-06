@@ -13,6 +13,8 @@ open! Incremental
 
 let stdout = force Writer.stdout
 
+external tsize : unit -> (int * int) = "tsize"
+
 module Frames = struct
   open Async
   open Incremental
