@@ -22,37 +22,21 @@ module Frames = struct
 
   let tick st =
     (* Define incrementals. *)
-    let nframes = Var.create st 0 in
-    let nframes_w = Var.watch nframes in
-    let trunc_t =
-      let%map nframes = nframes_w in
-      nframes / 50 * 50
+
+    let (r_init, c_init) = tsize () in
+    let termsize = Var.create st (r_init, c_init) in
+    let termsize_w = Var.watch termsize in
+    let termsize_eff =
+      let%map (r, c) = termsize_w in
+      Incremental.return st (Writer.write stdout (Termutils.move_cursor (0, 0) ^ Termutils.erasel ^ Format.sprintf "(number of rows %d and number of cols %d)" r c))
     in
-    (* Define effectful incrementals. *)
-    let nframes_eff =
-      let%map x = nframes_w in
-      Incremental.return
-        st
-        (Writer.write
-           stdout
-           (Termutils.move_cursor (0, 0)
-            ^ Format.sprintf "Current frame: %d < ~ > " x))
-    in
-    let _ = observe nframes_eff in
-    let trunc_eff =
-      let%map x = trunc_t in
-      Incremental.return st (Writer.write stdout (Format.sprintf "%d;" x))
-    in
-    let _ = observe trunc_eff in
-    (* Define ticker. *)
+    let _ = observe termsize_eff in
     let framerate = 60. in
-    Async.Clock.every
-      (sec (1. /. framerate))
-      (fun () ->
-        let temp = Incremental.Var.value nframes + 1 in
-        Incremental.Var.set nframes temp;
-        stabilize st)
-  ;;
+    Async.Clock.every (sec (1. /. framerate)) (fun () ->
+      let size = tsize () in
+      Incremental.Var.set termsize size;
+      stabilize st)
+    ;;
 end
 
 (** [on_startup] sets the state of the terminal at the beginning of the app.
@@ -68,7 +52,6 @@ let startup () =
   stdin.c_echo <- false;
   Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
   Termutils.hcursor stdout;
-  Effect.Queue.create ()
 ;;
 
 module St = Make ()
