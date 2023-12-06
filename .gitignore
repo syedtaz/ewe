@@ -30,3 +30,4 @@ _opam/
 
 lib/bindings/.idea
 lib/bindings/cmake-build-debug
+.vscode

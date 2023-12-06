@@ -1,4 +1,4 @@
- (library
+(library
  (name ewe)
  (libraries incremental bonsai core async bonsai.web)
  (foreign_archives ewe)
@@ -6,10 +6,12 @@
   (pps ppx_jane ppx_let ppx_sexp_conv ppx_compare bonsai.ppx_bonsai)))
 
 (data_only_dirs bindings)
+
 (rule
-(deps (source_tree bindings))
-(targets libewe.a)
-(action
-(no-infer
- (progn
-  (copy bindings/cmake-build-debug/libewe.a libewe.a)))))
+ (deps
+  (source_tree bindings))
+ (targets libewe.a)
+ (action
+  (no-infer
+   (progn
+    (copy bindings/cmake-build-debug/libewe.a libewe.a)))))

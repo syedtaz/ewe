@@ -13,7 +13,7 @@ open! Incremental
 
 let stdout = force Writer.stdout
 
-external tsize : unit -> (int * int) = "tsize"
+external tsize : unit -> int * int = "tsize"
 
 module Frames = struct
   open Async
@@ -21,22 +21,30 @@ module Frames = struct
   open Incremental.Let_syntax
 
   let tick st =
-    (* Define incrementals. *)
-
-    let (r_init, c_init) = tsize () in
+    (* Define incremental to track current size. *)
+    let r_init, c_init = tsize () in
     let termsize = Var.create st (r_init, c_init) in
     let termsize_w = Var.watch termsize in
+    (* Define effectful incremental to print current size. *)
     let termsize_eff =
-      let%map (r, c) = termsize_w in
-      Incremental.return st (Writer.write stdout (Termutils.move_cursor (0, 0) ^ Termutils.erasel ^ Format.sprintf "(number of rows %d and number of cols %d)" r c))
+      let%map r, c = termsize_w in
+      Incremental.return
+        st
+        (Writer.write
+           stdout
+           (Termutils.move_cursor (0, 0)
+            ^ Termutils.erasel
+            ^ Format.sprintf "(number of rows %d and number of cols %d)" r c))
     in
     let _ = observe termsize_eff in
-    let framerate = 60. in
-    Async.Clock.every (sec (1. /. framerate)) (fun () ->
+    (* Override signal handler to get+set current
+       terminal size when signal is received. *)
+    let sigwinch = Signal.of_caml_int 28 in
+    Signal.handle [ sigwinch ] ~f:(fun _ ->
       let size = tsize () in
       Incremental.Var.set termsize size;
       stabilize st)
-    ;;
+  ;;
 end
 
 (** [on_startup] sets the state of the terminal at the beginning of the app.
@@ -51,7 +59,7 @@ let startup () =
   stdin.c_icanon <- false;
   stdin.c_echo <- false;
   Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
-  Termutils.hcursor stdout;
+  Termutils.hcursor stdout
 ;;
 
 module St = Make ()
