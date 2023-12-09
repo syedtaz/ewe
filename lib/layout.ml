@@ -23,12 +23,12 @@ module Layout = struct
           let nc' = nc mod cc in
           let nr = cr + 1 in
           let rest = List.fold ch ~init:acc ~f:(fun a v -> aux a (nr, nc') v) in
-          (t, (nr, nc')) :: rest)
+          Map.set rest ~key:t ~data:(nr, nc'))
         else (
           let rest = List.fold ch ~init:acc ~f:(fun a v -> aux a (cr, nc) v) in
-          (t, (cr, nc)) :: rest)
+          Map.set rest ~key:t ~data:(cr, nc))
     in
-    aux [] (1, 0) node
+    aux (M.empty) (1, 0) node
   ;;
 end
 

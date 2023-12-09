@@ -50,6 +50,6 @@ let reader = force Reader.stdin
 let start () =
   let _ = startup () in
   let res = Layout.map (Const.view (initial_model ()) ()) in
-  List.iter ~f:(fun (s, (y, x)) -> Writer.write stdout (Format.sprintf "Tag: %s at (%d, %d)" s y x)) res;
+  Map.iteri ~f:(fun ~key:k ~data:(y,x) -> Writer.write stdout (Format.sprintf "Tag: %s at (%d, %d)" k y x)) res;
   never_returns (Scheduler.go ())
 ;;
