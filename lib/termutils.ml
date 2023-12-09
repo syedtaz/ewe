@@ -19,6 +19,7 @@ module Termutils = struct
   (** [erasel] clears the current line. *)
   let erasel = "\x1b[2K"
 
+  (** [move_cursor] (y, x) moves the cursor to row y and column x. *)
   let move_cursor (y, x) = Format.sprintf "\x1b[%d;%dH" y x
 
   (** [noop] is () -> (). *)

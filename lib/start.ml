@@ -37,20 +37,19 @@ module Const = struct
     let apply _a m = m
   end
 
-  let view model _action = Vdom.text ("Hello" ^ model) []
+  let view model _action = Vdom.text ("" ^ model) []
 end
 
-let initial_model () : Const.Model.t = " world!\n"
+let initial_model () : Const.Model.t = "Saad"
 
 module App = App.Run (Const)
 
+let reader = force Reader.stdin
+
+
 let start () =
   let _ = startup () in
-  let () = App.run (initial_model ()) in
-  let () =
-    List.iter
-      ~f:(fun (tag, (x, y)) -> Writer.write stdout (Format.sprintf "%s: %d %d" tag x y))
-      (Layout.map (Const.view (initial_model ()) ()))
-  in
+  let res = Layout.map (Const.view (initial_model ()) ()) in
+  List.iter ~f:(fun (s, (y, x)) -> Writer.write stdout (Format.sprintf "Tag: %s at (%d, %d)" s y x)) res;
   never_returns (Scheduler.go ())
 ;;

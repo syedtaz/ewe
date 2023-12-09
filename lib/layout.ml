@@ -12,7 +12,7 @@ module Layout = struct
     }
 
   let map node =
-    let rows, cols = Termutils.tsize () in
+    let _, cols = Termutils.tsize () in
     let rec aux acc (cr, cc) n =
       match n with
       | Element { tag = t; value = v; children = ch; _ } ->
@@ -28,7 +28,7 @@ module Layout = struct
           let rest = List.fold ch ~init:acc ~f:(fun a v -> aux a (cr, nc) v) in
           (t, (cr, nc)) :: rest)
     in
-    aux [] (rows, cols) node
+    aux [] (1, 0) node
   ;;
 end
 
