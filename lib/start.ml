@@ -1,6 +1,8 @@
 (** Start an ewe application. *)
 
 (** Todo!
+    [ ] Layout engine.
+      | [ ] Get current cursor not total size.
     [ ] Simple VDom diffing. *)
 
 open! Core
@@ -40,10 +42,15 @@ end
 
 let initial_model () : Const.Model.t = " world!\n"
 
-module App = App.Run(Const)
+module App = App.Run (Const)
 
 let start () =
   let _ = startup () in
   let () = App.run (initial_model ()) in
+  let () =
+    List.iter
+      ~f:(fun (tag, (x, y)) -> Writer.write stdout (Format.sprintf "%s: %d %d" tag x y))
+      (Layout.map (Const.view (initial_model ()) ()))
+  in
   never_returns (Scheduler.go ())
 ;;

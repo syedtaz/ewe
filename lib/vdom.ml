@@ -11,9 +11,12 @@ and element =
 let text body children = Element { tag = "text"; value = Some body; children }
 
 let repr node =
-  let rec aux acc n = match n with
+  let rec aux acc n =
+    match n with
     | Element { value = v; children = ch; _ } ->
       let v' = Option.value v ~default:"" in
-      let rest = List.fold ch ~init:acc ~f:(aux) in
+      let rest = List.fold ch ~init:acc ~f:aux in
       v' ^ rest
-    in aux "" node
+  in
+  aux "" node
+;;

@@ -24,8 +24,8 @@ module Run (C : Component) = struct
   let stdout = force Writer.stdout
 
   let run init =
-    Clock.every (sec 0.1)
-    (fun () ->
+    Clock.every (sec 0.5) (fun () ->
       let node = C.view init (fun _ -> ()) in
       Writer.write stdout (Vdom.repr node))
+  ;;
 end
