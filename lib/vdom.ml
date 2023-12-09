@@ -1,4 +1,3 @@
-open Async
 open Core
 
 type t = Element of element
@@ -9,13 +8,12 @@ and element =
   ; children : t list
   }
 
-let text body children = Element { tag = "text"; value = body; children }
+let text body children = Element { tag = "text"; value = Some body; children }
 
-let stdout = force Writer.stdout
-
-let rec print = function
-  | Element {tag = _; value = v; children = ch} ->
-    let () = match v with
-    | Some s -> Writer.write stdout s
-    | None -> ()
-    in List.iter ch ~f:(fun x -> print x)
+let repr node =
+  let rec aux acc n = match n with
+    | Element { value = v; children = ch; _ } ->
+      let v' = Option.value v ~default:"" in
+      let rest = List.fold ch ~init:acc ~f:(aux) in
+      v' ^ rest
+    in aux "" node

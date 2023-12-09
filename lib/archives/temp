@@ -1,0 +1,14 @@
+  let tick model =
+    let open Async in
+    Clock.every (sec 0.5) (fun () -> Vdom.print model)
+  (* let open Text in
+     let model = Var.create st (Model.of_tuple (Termutils.tsize ())) in
+     let model_w = Var.watch model in
+     let model_v = view model_w in
+     let model_o = observe model_v in
+     let sigwinch = Signal.of_caml_int 28 in
+     Signal.handle [ sigwinch ] ~f:(fun _ ->
+     Incremental.Var.set model (Model.of_tuple (Action.apply `SIGWINCH));
+     stabilize st;
+     Writer.write stdout (Observer.value_exn model_o)) *)
+end
