@@ -31,6 +31,13 @@ module Counter = struct
   ;;
 
   let initial_model () = 1
+
+  let mapping (key : Keyboard.key) =
+    let open Action in
+    match key with
+    | A -> Some Increment
+    | B -> Some Decrement
+    | _ -> None
 end
 
 module App = App.Run (Counter)
