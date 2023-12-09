@@ -27,7 +27,7 @@ module Counter = struct
   let view model _action =
     let open Incremental.Let_syntax in
     let%map model = model in
-    Vdom.text (string_of_int model) []
+    Vdom.text (Format.sprintf "Counter -> %d" model) []
   ;;
 
   let initial_model () = 1

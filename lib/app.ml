@@ -29,15 +29,15 @@ module EffectQueue (C : Component) = struct
 
   let create () : t = Deque.create ~initial_length:10 ()
 
-  let run (queue : t) (model : (C.Model.t, 'a) Var.t) model_o =
+  let run (queue : t) (model : (C.Model.t, 'a) Var.t) model_o st =
     let open Async in
     let framerate = 1. /. 60. in
     Clock.every (sec framerate) (fun () ->
-      let () =
-        Deque.iter queue ~f:(fun g ->
-          Var.set model (C.Action.apply g (Observer.value_exn model_o)))
-      in
-      Deque.clear queue)
+      let length = Deque.length queue in
+      List.iter (List.init length ~f:(fun _ -> ())) ~f:(fun _ ->
+        let eff = Deque.dequeue_front_exn queue in
+        let model' = C.Action.apply eff (Observer.value_exn model_o) in
+        Var.set model model'; stabilize st))
   ;;
 end
 
@@ -54,11 +54,12 @@ module Run (C : Component) = struct
     let model_o = observe model_w in
     let x =
       C.view model_w (fun _ -> ())
-      >>= fun x -> return st (Writer.write stdout (Termutils.erasel ^ Vdom.repr x))
+      >>= fun x -> return st (Writer.write stdout (Termutils.move_cursor (2, 0) ^ Termutils.erasel ^ Vdom.repr x))
     in
     let _ = observe x in
     stabilize st;
     let queue = Q.create () in
-    Q.run queue model model_o;
+    Q.run queue model model_o st;
+    ignore (Keyboard.read C.mapping queue);
   ;;
 end

@@ -70,13 +70,15 @@ let lift = function
 ;;
 
 let writer = force Writer.stdout
-let schedule_eff action queue = return (Deque.enqueue_back queue action)
+let schedule_eff action queue = Deque.enqueue_back queue action
 
 let rec read mapping queue =
   let%bind res = Reader.read_char reader in
   match res with
   | `Eof -> raise (Invalid_argument "EOF")
   | `Ok c ->
-    let _ = schedule_eff (mapping (lift c)) queue in
-    read mapping queue
+    let () = (match mapping (lift c) with
+    | Some a -> schedule_eff a queue
+    | None -> ())
+  in read mapping queue
 ;;
