@@ -28,7 +28,7 @@ module Layout = struct
           let rest = List.fold ch ~init:acc ~f:(fun a v -> aux a (cr, nc) v) in
           Map.set rest ~key:t ~data:(cr, nc))
     in
-    aux (M.empty) (1, 0) node
+    aux M.empty (1, 0) node
   ;;
 end
 

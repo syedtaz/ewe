@@ -9,7 +9,10 @@ module type Component = sig
     val apply : t -> Model.t -> Model.t
   end
 
-  val view : Model.t -> (Action.t -> unit) -> Vdom.t
+  val view
+    :  (Model.t, 'a) Incremental.t
+    -> (Action.t -> unit)
+    -> (Vdom.t, 'a) Incremental.t
 end
 
 module type App = Component
@@ -23,9 +26,10 @@ module Run (C : Component) = struct
 
   let stdout = force Writer.stdout
 
-  let run init =
-    Clock.every (sec 0.5) (fun () ->
-      let node = C.view init (fun _ -> ()) in
-      Writer.write stdout (Vdom.repr node))
+  let run node st =
+    let open Incremental in
+    let x = C.view node (fun _ -> ()) >>= fun x -> return st (Writer.write stdout (Vdom.repr x)) in
+    let _ = observe x in
+    stabilize st;
   ;;
 end

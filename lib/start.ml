@@ -2,7 +2,7 @@
 
 (** Todo!
     [ ] Layout engine.
-      | [ ] Get current cursor not total size.
+    | [ ] Get current cursor not total size.
     [ ] Simple VDom diffing. *)
 
 open! Core
@@ -37,19 +37,21 @@ module Const = struct
     let apply _a m = m
   end
 
-  let view model _action = Vdom.text ("" ^ model) []
+  let view model _action =
+    let open Incremental.Let_syntax in
+    let%map model = model in
+    Vdom.text ("" ^ model) []
 end
 
 let initial_model () : Const.Model.t = "Saad"
 
 module App = App.Run (Const)
-
-let reader = force Reader.stdin
-
+module St = Make ()
 
 let start () =
   let _ = startup () in
-  let res = Layout.map (Const.view (initial_model ()) ()) in
-  Map.iteri ~f:(fun ~key:k ~data:(y,x) -> Writer.write stdout (Format.sprintf "Tag: %s at (%d, %d)" k y x)) res;
+  let model = Var.create St.State.t (initial_model ()) in
+  let model_w = Var.watch model in
+  App.run model_w St.State.t;
   never_returns (Scheduler.go ())
 ;;
