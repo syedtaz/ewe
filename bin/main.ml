@@ -1,24 +1,38 @@
 open Ewe
 
-module Const = struct
+module Counter = struct
   module Model = struct
-    type t = string
+    type t = int
   end
 
   module Action = struct
-    type t = unit
+    type t =
+      | Increment
+      | Decrement
 
-    let apply _a m = m
+    let lift x =
+      match x with
+      | "Increment" -> Increment
+      | "Decrement" -> Decrement
+      | _ -> raise (Invalid_argument "Invalid signal")
+    ;;
+
+    let apply action m =
+      match action with
+      | Increment -> m + 1
+      | Decrement -> m - 1
+    ;;
   end
 
   let view model _action =
     let open Incremental.Let_syntax in
     let%map model = model in
-    Vdom.text ("" ^ model) []
+    Vdom.text (string_of_int model) []
+  ;;
 
-  let initial_model () = "Hello world."
+  let initial_model () = 1
 end
 
-module App = App.Run(Const)
+module App = App.Run (Counter)
 
 let () = Start.start App.run
