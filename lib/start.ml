@@ -14,21 +14,22 @@ open! Incremental
 let stdout = force Writer.stdout
 
 module Frames = struct
-  open Async
-  open Incremental
+  open! Async
+  open! Incremental
 
-  let tick st =
-    let open Text in
-    let model = Var.create st (Model.of_tuple (Termutils.tsize ())) in
-    let model_w = Var.watch model in
-    let model_v = view model_w in
-    let model_o = observe model_v in
-    let sigwinch = Signal.of_caml_int 28 in
-    Signal.handle [ sigwinch ] ~f:(fun _ ->
-      Incremental.Var.set model (Model.of_tuple (Action.apply `SIGWINCH));
-      stabilize st;
-      Writer.write stdout (Observer.value_exn model_o))
-  ;;
+  let tick model =
+    let open Async in
+    Clock.every (sec 0.5) (fun () -> Vdom.print model)
+  (* let open Text in
+     let model = Var.create st (Model.of_tuple (Termutils.tsize ())) in
+     let model_w = Var.watch model in
+     let model_v = view model_w in
+     let model_o = observe model_v in
+     let sigwinch = Signal.of_caml_int 28 in
+     Signal.handle [ sigwinch ] ~f:(fun _ ->
+     Incremental.Var.set model (Model.of_tuple (Action.apply `SIGWINCH));
+     stabilize st;
+     Writer.write stdout (Observer.value_exn model_o)) *)
 end
 
 (** [on_startup] sets the state of the terminal at the beginning of the app.
@@ -50,6 +51,7 @@ module St = Make ()
 
 let start () =
   let _ = startup () in
-  Frames.tick St.State.t;
+  let model = Vdom.text (Some "Hello world!") [] in
+  Frames.tick model;
   never_returns (Scheduler.go ())
 ;;
