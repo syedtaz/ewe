@@ -17,19 +17,13 @@ module type Component = sig
   val initial_model : unit -> Model.t
 end
 
-module type App = Component
-
 module Run (C : Component) = struct
   open Core
   open Async
 
-  type model = C.Model.t
-  type action = C.Action.t
-
-  let stdout = force Writer.stdout
-
   let run st =
     let open Incremental in
+    let stdout = force Writer.stdout in
     let model = Var.create st (C.initial_model ()) in
     let model_w = Var.watch model in
     let x = C.view model_w (fun _ -> ()) >>= fun x -> return st (Writer.write stdout (Vdom.repr x)) in

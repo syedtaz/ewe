@@ -2,7 +2,6 @@
 
 (** Todo!
     [ ] Layout engine.
-    | [ ] Get current cursor not total size.
     [ ] Simple VDom diffing. *)
 
 open! Core
@@ -26,31 +25,10 @@ let startup () =
   Termutils.hcursor stdout
 ;;
 
-module Const = struct
-  module Model = struct
-    type t = string
-  end
-
-  module Action = struct
-    type t = unit
-
-    let apply _a m = m
-  end
-
-  let view model _action =
-    let open Incremental.Let_syntax in
-    let%map model = model in
-    Vdom.text ("" ^ model) []
-
-  let initial_model () = "Hello world."
-end
-
-
-module App = App.Run (Const)
 module St = Make ()
 
-let start () =
+let start f =
   let _ = startup () in
-  App.run St.State.t;
+  f St.State.t;
   never_returns (Scheduler.go ())
 ;;
