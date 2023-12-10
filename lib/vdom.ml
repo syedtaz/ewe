@@ -3,6 +3,8 @@ open Core
 type tag = ..
 type tag += Node | Text
 
+include Grid
+
 type t = Element of element
 
 and element =
@@ -13,7 +15,7 @@ and element =
   ; children : t list
   }
 
-let text ~id body ~grid children =
+let text ~id ~grid body children =
   Element { id; tag = Text; value = Some body; grid; children }
 ;;
 
