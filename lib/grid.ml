@@ -1,7 +1,6 @@
 module Grid = struct
-  type sunit =
-    | Px of int
-    | Fr of int
+  type sunit = Px of int
+  (* | Fr of int *)
 
   type t =
     (* | RowDef of sunit list *)

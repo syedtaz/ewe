@@ -1,9 +1,16 @@
 (library
  (name ewe)
- (libraries incremental bonsai incr_map core async bonsai.web)
+ (libraries incremental core async)
  (foreign_archives ewe)
+ (inline_tests)
  (preprocess
-  (pps ppx_jane ppx_let ppx_sexp_conv ppx_compare bonsai.ppx_bonsai)))
+  (pps
+   ppx_jane
+   ppx_let
+   ppx_sexp_conv
+   ppx_compare
+   bonsai.ppx_bonsai
+   ppx_inline_test)))
 
 (data_only_dirs bindings)
 
