@@ -1,4 +1,5 @@
 open Ewe
+
 module Counter = struct
   module Model = struct
     type t = int
@@ -20,10 +21,10 @@ module Counter = struct
     let open Incremental.Let_syntax in
     let open Vdom in
     let%map model = model in
-    node ~id:"CounterW" ~grid:(coldef ([px 200])) [
-      text ~id:"Counter" ~grid:(colidx2 0 0) (Format.sprintf "Counter -> %d" model) []
-    ]
-
+    node
+      ~id:"CounterW"
+      ~grid:(coldef [ px 200 ])
+      [ text ~id:"Counter" ~grid:(colidx2 0 0) (Format.sprintf "Counter -> %d" model) [] ]
   ;;
 
   let initial_model () = 1

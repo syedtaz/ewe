@@ -18,7 +18,7 @@ module type Component = sig
   val mapping : Keyboard.key -> Action.t Option.t
 end
 
-module EffectQueue (C : Component) = struct
+module ActionQueue (C : Component) = struct
   open Core
   open Incremental
 
@@ -45,7 +45,7 @@ end
 module Run (C : Component) = struct
   open Core
   open Async
-  module Q = EffectQueue (C)
+  module Q = ActionQueue (C)
 
   let run st =
     let open Incremental in
