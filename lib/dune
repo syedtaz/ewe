@@ -10,7 +10,8 @@
    ppx_sexp_conv
    ppx_compare
    bonsai.ppx_bonsai
-   ppx_inline_test)))
+   ppx_inline_test
+   ppx_assert)))
 
 (data_only_dirs bindings)
 

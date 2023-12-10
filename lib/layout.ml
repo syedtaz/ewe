@@ -32,7 +32,7 @@ module Layout = struct
         aux (crow + 1, ccol) (((crow, ccol), chunk) :: acc) rest)
       else ((crow, ccol), str) :: acc
     in
-    aux (crow, ccol) [] str
+    List.rev (aux (crow, ccol) [] str)
   ;;
 end
 
@@ -40,15 +40,16 @@ module Tests = struct
   open Core
   open Layout
 
-  type t = ((int * int) * string)
+  type t = ((int * int) * string) [@@deriving compare, sexp]
 
-  let compare a b =
-    let ((start, fin), value) = a
-    and ((start', fin'), value') = b in
-    Int.equal start start' && Int.equal fin fin' && String.equal value value'
+  let%test_unit "split_no_split" =
+    [%test_eq: t list] [((1, 0), "hello")] (split (1, 0) 10 "hello")
 
-  let%test "split_no_split" =
-    List.equal compare [((1, 0), "hello")] (split (1, 0) 10 "hello")
+  let%test_unit "split_one_split" =
+  [%test_eq: t list] [((1, 0), "hello\n"); ((2, 0), "world")] (split (1, 0) 5 "helloworld")
+
+  (* let%test "split_one_split" =
+    List.equal compare [((1, 0), "hello"); ((2, 0), "world")] (split (1, 0) 5 "helloworld") *)
 end
 
 include Layout
