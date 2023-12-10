@@ -6,7 +6,6 @@ module type Component = sig
   module Action : sig
     type t
 
-    val lift : string -> t
     val apply : t -> Model.t -> Model.t
   end
 
@@ -16,7 +15,6 @@ module type Component = sig
     -> (Vdom.t, 'a) Incremental.t
 
   val initial_model : unit -> Model.t
-
   val mapping : Keyboard.key -> Action.t Option.t
 end
 
@@ -34,10 +32,13 @@ module EffectQueue (C : Component) = struct
     let framerate = 1. /. 60. in
     Clock.every (sec framerate) (fun () ->
       let length = Deque.length queue in
-      List.iter (List.init length ~f:(fun _ -> ())) ~f:(fun _ ->
-        let eff = Deque.dequeue_front_exn queue in
-        let model' = C.Action.apply eff (Observer.value_exn model_o) in
-        Var.set model model'; stabilize st))
+      List.iter
+        (List.init length ~f:(fun _ -> ()))
+        ~f:(fun _ ->
+          let eff = Deque.dequeue_front_exn queue in
+          let model' = C.Action.apply eff (Observer.value_exn model_o) in
+          Var.set model model';
+          stabilize st))
   ;;
 end
 
@@ -54,12 +55,17 @@ module Run (C : Component) = struct
     let model_o = observe model_w in
     let x =
       C.view model_w (fun _ -> ())
-      >>= fun x -> return st (Writer.write stdout (Termutils.move_cursor (2, 0) ^ Termutils.erasel ^ Vdom.repr x))
+      >>= fun x ->
+      return
+        st
+        (Writer.write
+           stdout
+           (Termutils.move_cursor (2, 0) ^ Termutils.erasel ^ Vdom.repr x))
     in
     let _ = observe x in
     stabilize st;
     let queue = Q.create () in
     Q.run queue model model_o st;
-    ignore (Keyboard.read C.mapping queue);
+    ignore (Keyboard.read C.mapping queue)
   ;;
 end

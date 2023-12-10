@@ -10,13 +10,6 @@ module Counter = struct
       | Increment
       | Decrement
 
-    let lift x =
-      match x with
-      | "Increment" -> Increment
-      | "Decrement" -> Decrement
-      | _ -> raise (Invalid_argument "Invalid signal")
-    ;;
-
     let apply action m =
       match action with
       | Increment -> m + 1

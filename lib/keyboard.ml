@@ -77,8 +77,10 @@ let rec read mapping queue =
   match res with
   | `Eof -> raise (Invalid_argument "EOF")
   | `Ok c ->
-    let () = (match mapping (lift c) with
-    | Some a -> schedule_eff a queue
-    | None -> ())
-  in read mapping queue
+    let () =
+      match mapping (lift c) with
+      | Some a -> schedule_eff a queue
+      | None -> ()
+    in
+    read mapping queue
 ;;
