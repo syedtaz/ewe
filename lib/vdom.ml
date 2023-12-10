@@ -1,14 +1,23 @@
 open Core
 
+type tag = ..
+type tag += Node | Text
+
 type t = Element of element
 
 and element =
-  { tag : string
+  { id : string
+  ; tag : tag
   ; value : string option
+  ; grid : Grid.t
   ; children : t list
   }
 
-let text body children = Element { tag = "text"; value = Some body; children }
+let text ~id body ~grid children =
+  Element { id; tag = Text; value = Some body; grid; children }
+;;
+
+let node ~id ~grid children = Element { id; tag = Node; value = None; grid; children }
 
 let repr node =
   let rec aux acc n =
@@ -16,7 +25,7 @@ let repr node =
     | Element { value = v; children = ch; _ } ->
       let v' = Option.value v ~default:"" in
       let rest = List.fold ch ~init:acc ~f:aux in
-      v' ^ rest
+      rest ^ v'
   in
   aux "" node
 ;;

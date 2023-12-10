@@ -1,8 +1,13 @@
 open Async
 
 module Termutils = struct
+  external c_tsize : unit -> int = "tsize" [@@noalloc]
+
   (** [tsize] uses ioctl to get the number of rows and columns of the current window. *)
-  external tsize : unit -> int * int = "tsize"
+  let tsize () =
+    let temp = c_tsize () in
+    temp lsr 16, temp land 255
+  ;;
 
   (** [hcursor] hides the cursor. *)
   let hcursor writer = Writer.write writer "\x1b[?25l"
