@@ -26,6 +26,14 @@ module Layout = struct
     List.iter els ~f:(fun (cursor, payload) ->
       Writer.write stdout (Termutils.move_cursor cursor ^ payload))
   ;;
+
+  (* let generate (n : Vdom.element) : t list =
+    let size = snd (Termutils.tsize ()) in
+    let rec aux acc (n : Vdom.element) : t list = match n with
+      | { value; grid; children; _} -> match value with
+        | Some v -> split (1, 0) size v
+        | None ->
+    in aux [] n *)
 end
 
 module Tests = struct
