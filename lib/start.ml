@@ -22,7 +22,20 @@ let startup () =
   stdin.c_icanon <- false;
   stdin.c_echo <- false;
   Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
-  Termutils.hcursor stdout
+  Termutils.hcursor stdout;
+  Termutils.erase_screen stdout
+;;
+
+let shutdown () =
+  let open Core_unix in
+  let stdout = force Writer.stdout in
+  let fd = File_descr.of_int 0 in
+  let stdin = Terminal_io.tcgetattr fd in
+  stdin.c_icanon <- true;
+  stdin.c_echo <- true;
+  Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
+  Termutils.scursor stdout;
+  exit 0
 ;;
 
 module St = Make ()

@@ -60,7 +60,7 @@ module Run (C : Component) = struct
         st
         (Writer.write
            stdout
-           (Termutils.move_cursor (2, 0) ^ Termutils.erasel ^ Vdom.repr x))
+           (Termutils.move_cursor (1, 0) ^ Termutils.erasel ^ Vdom.repr x))
     in
     let _ = observe x in
     stabilize st;

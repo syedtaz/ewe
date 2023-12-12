@@ -24,7 +24,14 @@ module Counter = struct
     node
       ~id:"CounterW"
       ~grid:(coldef [ px 200 ])
-      [ text ~id:"Counter" ~grid:(colidx2 0 0) (Format.sprintf "Counter -> %d" model) [] ]
+      ~attrs:[]
+      [ text
+          ~id:"Counter"
+          ~attrs:[]
+          ~grid:(colidx2 0 0)
+          (Format.sprintf "Counter -> %d" model)
+          []
+      ]
   ;;
 
   let initial_model () = 1

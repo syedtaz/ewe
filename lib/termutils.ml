@@ -12,8 +12,16 @@ module Termutils = struct
   (** [hcursor] hides the cursor. *)
   let hcursor writer = Writer.write writer "\x1b[?25l"
 
+  let rgb r g b = Format.sprintf "\x1b[38;2;%d;%d;%dm" r g b
+  let clearfmt = "\x1b[0m"
+
+  (** [scursor] shows the cursor. *)
+  let scursor writer = Writer.write writer "\x1b[?25h"
+
   (** [delete] moves the cursor one column back. *)
   let delete = "\x1b[1D"
+
+  let erase_screen writer = Writer.write writer "\x1b[2J"
 
   (** [erasel_till_cursor] clears the current line from the starting column upto the cursor. *)
   let erasel_till_cursor = "\x1b[1K"
