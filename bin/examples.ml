@@ -71,6 +71,7 @@ module Neofetch = struct
           ~id:"root"
           ~attrs:[]
           ~grid:(colidx2 0 0)
+          ~size:(254, 254)
           "~/Desktop/neofetch.png"
           []
       ; text

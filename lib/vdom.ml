@@ -2,7 +2,7 @@ module Vdom = struct
   open Core
 
   type tag = ..
-  type tag += Node | Text | Image
+  type tag += Node | Text | Image of (int * int)
 
   include Grid
 
@@ -42,8 +42,8 @@ module Vdom = struct
     Element { id; tag = Text; attrs; value = Some body; grid; children }
   ;;
 
-  let image ~id ~grid ~attrs path children =
-    Element { id; tag = Image; attrs; value = Some path; grid; children }
+  let image ~id ~grid ~attrs ~size path children =
+    Element { id; tag = Image size; attrs; value = Some path; grid; children }
   ;;
 
   let node ~id ~grid ~attrs children =
@@ -57,8 +57,8 @@ module Vdom = struct
         let v =
           match tag with
           | Node -> ""
-          | Text -> Option.value value ~default:""
-          | Image ->
+          | Text -> Option.value value ~default:"" |> Layout.split (1, 40) 50 |> Layout.paint
+          | Image _ ->
             (match value with
              | Some path ->
                Format.sprintf "\x1b_Ga=T,f=100,t=f;%s\x1b\\" (Base64.encode_exn @@ path)

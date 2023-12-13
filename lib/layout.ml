@@ -1,6 +1,5 @@
 module Layout = struct
   open Core
-  open Async
 
   type t = (int * int) * (int * int) * string [@@deriving compare, sexp]
 
@@ -13,26 +12,35 @@ module Layout = struct
     let rec aux (crow, ccol) acc str =
       let len = String.length str in
       if len > size
-      then (
-        let chunk = String.sub ~pos:0 ~len:size str ^ "\n" in
-        let rest = String.sub ~pos:size ~len:(len - size) str in
-        aux (crow + 1, ccol) (((crow, ccol), (crow, ccol + size), chunk) :: acc) rest)
+      then
+        if String.contains str '\n'
+        then newline (crow, ccol) acc str
+        else (
+          let chunk = String.sub ~pos:0 ~len:size str ^ "\n" in
+          let rest = String.sub ~pos:size ~len:(len - size) str in
+          aux (crow + 1, ccol) (((crow, ccol), (crow, ccol + size), chunk) :: acc) rest)
       else ((crow, ccol), (crow, ccol + len), str) :: acc
+    and newline (crow, ccol) acc str =
+      let chunk, rest = String.lsplit2_exn str ~on:'\n' in
+      let nchunk = chunk ^ "\n" in
+      let ncol = String.length nchunk in
+      aux (crow + 1, ccol) (((crow, ccol), (crow, ccol + ncol), nchunk) :: acc) rest
     in
     List.rev (aux (crow, ccol) [] str)
   ;;
 
   let paint (els : t list) =
-    List.iter els ~f:(fun (cursor, _, payload) ->
-      Writer.write stdout (Termutils.move_cursor cursor ^ payload))
+    String.concat
+    @@ List.map els ~f:(fun (cursor, _, payload) ->
+      Termutils.move_cursor cursor ^ payload)
   ;;
 
-  let generate (n : Vdom.t) : t list =
+  (* let generate (n : Vdom.t) : t list =
     let f acc (x : string option) =
       let y = Option.value x ~default:"" in
       split (1, 0) 5 y @ acc
     in
-    Vdom.fold_value n [] ~f
+    Vdom.fold_value n [] ~f *)
   ;;
 end
 
@@ -55,7 +63,13 @@ module Tests = struct
       (Layout.split (1, 0) 5 "helloworldjohn")
   ;;
 
-  let simple_vdom =
+  let%test_unit "split_multi_split_2" =
+    [%test_eq: Layout.t list]
+      [ (1, 0), (1, 6), "hello\n"; (2, 0), (2, 5), "world" ]
+      (Layout.split (1, 0) 10 "hello\nworld")
+  ;;
+
+  (* let simple_vdom =
     let open Vdom in
     text ~id:"id" ~grid:(colidx 0) ~attrs:[] "hello" []
   ;;
@@ -68,9 +82,9 @@ module Tests = struct
       ~attrs:[]
       "hello"
       [ text ~id:"id2" ~attrs:[] ~grid:(colidx 0) "world" [] ]
-  ;;
+  ;; *)
 
-  let%test_unit "generate_one" =
+  (* let%test_unit "generate_one" =
     [%test_eq: Layout.t list] [ (1, 0), (1, 5), "hello" ] (Layout.generate simple_vdom)
   ;;
 
@@ -78,16 +92,8 @@ module Tests = struct
     [%test_eq: Layout.t list]
       (* TODO! FIX THIS *)
       [ (1, 0), (1, 5), "hello"; (1, 0), (1, 5), "world" ]
-      (Layout.generate multi_vdom)
+      (Layout.generate multi_vdom) *)
   ;;
-
-  let image_size () =
-    let ic = In_channel.create "/Users/taz/Desktop/neofetch.png" in
-    let buf = Bytes.create 16 in
-    let _ = In_channel.input_binary_int ic in
-    Bytes.to_string buf
-
-  let%expect_test "png" = Stdio.print_endline (image_size ())
 end
 
 include Layout
