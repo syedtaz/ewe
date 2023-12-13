@@ -80,6 +80,14 @@ module Tests = struct
       [ (1, 0), (1, 5), "hello"; (1, 0), (1, 5), "world" ]
       (Layout.generate multi_vdom)
   ;;
+
+  let image_size () =
+    let ic = In_channel.create "/Users/taz/Desktop/neofetch.png" in
+    let buf = Bytes.create 16 in
+    let _ = In_channel.input_binary_int ic in
+    Bytes.to_string buf
+
+  let%expect_test "png" = Stdio.print_endline (image_size ())
 end
 
 include Layout

@@ -2,7 +2,7 @@ module Vdom = struct
   open Core
 
   type tag = ..
-  type tag += Node | Text
+  type tag += Node | Text | Image
 
   include Grid
 
@@ -42,6 +42,10 @@ module Vdom = struct
     Element { id; tag = Text; attrs; value = Some body; grid; children }
   ;;
 
+  let image ~id ~grid ~attrs path children =
+    Element { id; tag = Image; attrs; value = Some path; grid; children }
+  ;;
+
   let node ~id ~grid ~attrs children =
     Element { id; tag = Node; attrs; value = None; grid; children }
   ;;
@@ -49,8 +53,19 @@ module Vdom = struct
   let repr node =
     let rec aux acc n =
       match n with
-      | Element { value = v; attrs; children = ch; _ } ->
-        let v' = Attributes.apply attrs (Option.value v ~default:"") in
+      | Element { value; tag; attrs; children = ch; _ } ->
+        let v =
+          match tag with
+          | Node -> ""
+          | Text -> Option.value value ~default:""
+          | Image ->
+            (match value with
+             | Some path ->
+               Format.sprintf "\x1b_Ga=T,f=100,t=f;%s\x1b\\" (Base64.encode_exn @@ path)
+             | None -> "")
+          | _ -> raise (Invalid_argument "Unkown variant")
+        in
+        let v' = Attributes.apply attrs v in
         let rest = List.fold ch ~init:acc ~f:aux in
         rest ^ v'
     in
