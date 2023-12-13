@@ -37,6 +37,16 @@ module Termutils = struct
 
   (** [noop] is () -> (). *)
   let noop () = ()
+
+  module Window = struct
+    let save_window_name = "\x1b[22;0t"
+    let set_window_name v = Format.sprintf "\x1b]0;%s\007" v
+    let restore_window_name = "\x1b[23;0t"
+
+    let save_and_set writer name =
+      Writer.write writer (save_window_name ^ set_window_name name)
+    ;;
+  end
 end
 
 include Termutils

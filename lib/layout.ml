@@ -41,7 +41,6 @@ module Layout = struct
       split (1, 0) 5 y @ acc
     in
     Vdom.fold_value n [] ~f *)
-  ;;
 end
 
 module Tests = struct
@@ -70,30 +69,29 @@ module Tests = struct
   ;;
 
   (* let simple_vdom =
-    let open Vdom in
-    text ~id:"id" ~grid:(colidx 0) ~attrs:[] "hello" []
-  ;;
+     let open Vdom in
+     text ~id:"id" ~grid:(colidx 0) ~attrs:[] "hello" []
+     ;;
 
-  let multi_vdom =
-    let open Vdom in
-    text
-      ~id:"id"
-      ~grid:(colidx 0)
-      ~attrs:[]
-      "hello"
-      [ text ~id:"id2" ~attrs:[] ~grid:(colidx 0) "world" [] ]
-  ;; *)
+     let multi_vdom =
+     let open Vdom in
+     text
+     ~id:"id"
+     ~grid:(colidx 0)
+     ~attrs:[]
+     "hello"
+     [ text ~id:"id2" ~attrs:[] ~grid:(colidx 0) "world" [] ]
+     ;; *)
 
   (* let%test_unit "generate_one" =
-    [%test_eq: Layout.t list] [ (1, 0), (1, 5), "hello" ] (Layout.generate simple_vdom)
-  ;;
+     [%test_eq: Layout.t list] [ (1, 0), (1, 5), "hello" ] (Layout.generate simple_vdom)
+     ;;
 
-  let%test_unit "generate_multi" =
-    [%test_eq: Layout.t list]
-      (* TODO! FIX THIS *)
-      [ (1, 0), (1, 5), "hello"; (1, 0), (1, 5), "world" ]
-      (Layout.generate multi_vdom) *)
-  ;;
+     let%test_unit "generate_multi" =
+     [%test_eq: Layout.t list]
+     (* TODO! FIX THIS *)
+     [ (1, 0), (1, 5), "hello"; (1, 0), (1, 5), "world" ]
+     (Layout.generate multi_vdom) *)
 end
 
 include Layout

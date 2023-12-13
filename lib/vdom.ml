@@ -57,7 +57,8 @@ module Vdom = struct
         let v =
           match tag with
           | Node -> ""
-          | Text -> Option.value value ~default:"" |> Layout.split (1, 40) 50 |> Layout.paint
+          | Text ->
+            Option.value value ~default:"" |> Layout.split (1, 0) 50 |> Layout.paint
           | Image _ ->
             (match value with
              | Some path ->

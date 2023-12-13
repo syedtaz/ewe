@@ -14,7 +14,7 @@ let stdout = force Writer.stdout
     This includes hiding the cursor and disabling canonincal and echo mode.
     Takes an arbitrary function [f] that can be used to schedule user defined
     (possibly side-effecting) functions before the app begins properly.*)
-let startup () =
+let startup ~name =
   let open Core_unix in
   let stdout = force Writer.stdout in
   let fd = File_descr.of_int 0 in
@@ -23,7 +23,10 @@ let startup () =
   stdin.c_echo <- false;
   Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
   Termutils.hcursor stdout;
-  Termutils.erase_screen stdout
+  Termutils.erase_screen stdout;
+  match name with
+  | Some v -> Termutils.Window.save_and_set stdout v
+  | None -> ()
 ;;
 
 let shutdown () =
@@ -40,8 +43,8 @@ let shutdown () =
 
 module St = Make ()
 
-let start f =
-  let _ = startup () in
+let start ~name f =
+  let _ = startup ~name in
   f St.State.t;
   never_returns (Scheduler.go ())
 ;;
