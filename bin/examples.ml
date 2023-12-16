@@ -41,6 +41,7 @@ module Counter : App.Component = struct
     match key with
     | A -> Sub.Cmd Increment
     | D -> Sub.Cmd Decrement
+    | Q -> Sub.Quit
     | _ -> Sub.Nil
   ;;
 end

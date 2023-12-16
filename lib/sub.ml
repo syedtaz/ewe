@@ -4,6 +4,7 @@ module Sub = struct
 
   type 'a t =
     | Cmd of 'a
+    | Quit
     | Nil
 
   module S = Set.Make (Char)
@@ -17,7 +18,9 @@ module Sub = struct
        | Cmd v ->
          ignore (Pipe.write writer v);
          keypress ~f writer
-       | Nil -> keypress ~f writer)
+       | Nil -> keypress ~f writer
+       | Quit -> Term.shutdown ()
+       )
   ;;
 
   let rec send_msg ~f reader =
