@@ -29,7 +29,7 @@ module Vdom = struct
     let apply1 attr value =
       match attr with
       | Color (RGB (r, g, b)) ->
-        Format.sprintf "%s%s%s" (Termutils.rgb r g b) value Termutils.clearfmt
+        Format.sprintf "%s%s%s" (Term.rgb r g b) value Term.clearfmt
       | _ -> raise (Invalid_argument "Unknown variant")
     ;;
 

@@ -1,4 +1,4 @@
 open Ewe
-module App = App.Run (Examples.Counter)
+module App = App.Make (Examples.Counter)
 
-let () = Start.start ~name:(Some "Counter") App.run
+let () = App.start ~name:(Some "Counter")

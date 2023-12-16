@@ -1,14 +1,4 @@
 (library
  (name events)
- (libraries incremental core async runtime)
- (inline_tests)
- (preprocess
-  (pps
-   ppx_jane
-   ppx_let
-   ppx_sexp_conv
-   ppx_compare
-   bonsai.ppx_bonsai
-   ppx_inline_test
-   ppx_expect
-   ppx_assert)))
+ (libraries runtime)
+ (inline_tests))

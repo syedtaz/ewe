@@ -32,7 +32,7 @@ module Layout = struct
   let paint (els : t list) =
     String.concat
     @@ List.map els ~f:(fun (cursor, _, payload) ->
-      Termutils.move_cursor cursor ^ payload)
+      Term.move_cursor cursor ^ payload)
   ;;
 
   (* let generate (n : Vdom.t) : t list =

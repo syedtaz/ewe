@@ -15,24 +15,23 @@ module type Component = sig
     -> (Vdom.t, 'a) Incremental.t
 
   val initial_model : unit -> Model.t
-  val temp_subchars : char list
   val subscriptions : Events.Key.t -> Action.t Sub.t
 end
 
-module Run (C : Component) = struct
-  open Core
+module St = Incremental.Make ()
 
+module Make (C : Component) = struct
   let run st =
     let open Incremental in
     let model = Var.create st (C.initial_model ()) in
     let model_w = Var.watch model in
     let update_incr =
-      C.view model_w (fun _ -> ())
-      >>= fun x ->
+      let open Incremental.Let_syntax in
+      let%bind view = C.view model_w (fun _ -> ()) in
       return
         st
         (Runtime.Io.write_out
-           (Termutils.move_cursor (1, 0) ^ Termutils.erasel ^ Vdom.repr x))
+           (Term.move_cursor (1, 0) ^ Term.erasel ^ Vdom.repr view))
     in
     let _ = observe update_incr in
     stabilize st;
@@ -44,6 +43,11 @@ module Run (C : Component) = struct
     in
     Sub.start updatef C.subscriptions ~reader:eventr ~writer:eventw
   ;;
+
+  let start ~name =
+    let _ = Term.startup ~name in
+    run St.State.t;
+    Core.never_returns (Async.Scheduler.go ())
 end
 
 (* V *)

@@ -1,4 +1,11 @@
-module Termutils = struct
+module Window = struct
+  let save_window_name = "\x1b[22;0t"
+  let set_window_name v = Format.sprintf "\x1b]0;%s\007" v
+  let restore_window_name = "\x1b[23;0t"
+  let save_and_set name = Runtime.Io.write_out (save_window_name ^ set_window_name name)
+end
+
+module Term = struct
   external c_tsize : unit -> int = "tsize" [@@noalloc]
 
   (** [tsize] uses ioctl to get the number of rows and columns of the current window. *)
@@ -36,12 +43,23 @@ module Termutils = struct
   (** [noop] is () -> (). *)
   let noop () = ()
 
-  module Window = struct
-    let save_window_name = "\x1b[22;0t"
-    let set_window_name v = Format.sprintf "\x1b]0;%s\007" v
-    let restore_window_name = "\x1b[23;0t"
-    let save_and_set name = Runtime.Io.write_out (save_window_name ^ set_window_name name)
-  end
+    (** [on_startup] sets the state of the terminal at the beginning of the app.
+  This includes hiding the cursor and disabling canonincal and echo mode.
+  Takes an arbitrary function [f] that can be used to schedule user defined
+  (possibly side-effecting) functions before the app begins properly.*)
+  let startup ~name =
+    let open Core_unix in
+    let fd = File_descr.of_int 0 in
+    let stdin = Terminal_io.tcgetattr fd in
+    stdin.c_icanon <- false;
+    stdin.c_echo <- false;
+    Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
+    hcursor ();
+    erase_screen ();
+    match name with
+    | Some v -> Window.save_and_set v
+    | None -> ()
+  ;;
 end
 
-include Termutils
+include Term

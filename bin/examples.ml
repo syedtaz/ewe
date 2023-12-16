@@ -35,7 +35,6 @@ module Counter : App.Component = struct
   ;;
 
   let initial_model () = 1
-  let temp_subchars = [ 'a'; 'd' ]
 
   let subscriptions (key : Events.Key.t) =
     let open Action in
@@ -46,7 +45,7 @@ module Counter : App.Component = struct
   ;;
 end
 
-module Neofetch = struct
+module Neofetch : App.Component = struct
   module Model = struct
     type t = unit
   end
@@ -106,7 +105,7 @@ module Neofetch = struct
 
   let initial_model () = ()
 
-  let mapping = function
-    | _ -> None
+  let subscriptions = function
+    | _ -> Sub.Nil
   ;;
 end

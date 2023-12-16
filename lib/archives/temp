@@ -30,3 +30,14 @@ end
 "CPU: Intel i7-6500U (4) @ 3.100GHz\n";
 "GPU: Intel HD Graphics 520\n";
 "Memory: 1933MiB / 7890 MiB"]
+
+(* let shutdown () =
+   let open Core_unix in
+   let fd = File_descr.of_int 0 in
+   let stdin = Terminal_io.tcgetattr fd in
+   stdin.c_icanon <- true;
+   stdin.c_echo <- true;
+   Terminal_io.tcsetattr stdin fd ~mode:TCSANOW;
+   Termutils.scursor ();
+   exit 0
+   ;; *)

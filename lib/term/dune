@@ -1,0 +1,4 @@
+(library
+ (name term)
+ (libraries runtime)
+ (inline_tests))

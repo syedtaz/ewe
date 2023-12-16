@@ -1,6 +1,6 @@
 (library
  (name ewe)
- (libraries incremental core async base64 events runtime)
+ (libraries incremental core async base64 events runtime term)
  (foreign_archives ewe)
  (inline_tests)
  (preprocess
