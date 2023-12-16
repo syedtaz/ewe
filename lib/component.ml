@@ -17,5 +17,5 @@ module type T = sig
     -> (Vdom.t, 'a) Incremental.t
 
   val initial_model : unit -> Model.t
-  val subscriptions : Events.Key.t -> Action.t Sub.t
+  val subscriptions : Action.t Sub.decoders
 end
