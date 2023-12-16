@@ -1,41 +1,49 @@
 module Sub = struct
-  open Core
-  open Async
+  open! Core
+  open! Async
 
   type 'a t =
-    | Cmd of 'a
+    | Msg of 'a
     | Quit
     | Nil
 
-  module S = Set.Make (Char)
+  let interleave rs =
+    let totalr, totalw = Pipe.create () in
+    let () =
+      Deferred.List.iter ~how:`Parallel rs ~f:(fun x -> Pipe.transfer_id x totalw)
+      >>> fun () -> Pipe.close totalw
+    in
+    totalr
+  ;;
 
-  let rec keypress ~f writer =
-    let%bind result = Reader.read_char Runtime.Io.stdin in
+  type 'a key_decoder = Events.Key.t -> 'a t
+
+  let rec start ~(decoder : 'a key_decoder) ~update =
+    let keyr, keyw = Pipe.create () in
+    let () = don't_wait_for (keypress_aux decoder keyw) in
+    let () = don't_wait_for (schedule (interleave [ keyr ]) update) in
+    ()
+
+  and keypress_aux f keyw =
+    let%bind input = Reader.read_char Runtime.Io.stdin in
+    match input with
+    | `Eof -> keypress_aux f keyw
+    | `Ok c ->
+      let c' = Events.Key.lift c in
+      (match f c' with
+       | Msg v ->
+         let () = ignore (Pipe.write keyw v) in
+         keypress_aux f keyw
+       | Nil -> keypress_aux f keyw
+       | Quit -> Term.shutdown ())
+
+  and schedule (reader : 'a Pipe.Reader.t) update =
+    let%bind result = Pipe.read' reader in
     match result with
-    | `Eof -> keypress ~f writer
-    | `Ok c ->
-      (match f (Events.Key.lift c) with
-       | Cmd v ->
-         ignore (Pipe.write writer v);
-         keypress ~f writer
-       | Nil -> keypress ~f writer
-       | Quit -> Term.shutdown ()
-       )
-  ;;
-
-  let rec send_msg ~f reader =
-    Pipe.read' reader
-    >>= fun x ->
-    match x with
-    | `Eof -> send_msg ~f reader
-    | `Ok c ->
-      Queue.iter ~f:(fun x -> f x) c;
-      send_msg ~f reader
-  ;;
-
-  let start action filter ~reader ~writer =
-    don't_wait_for (keypress ~f:filter writer);
-    don't_wait_for (send_msg ~f:action reader)
+    | `Eof -> schedule reader update
+    | `Ok msgs ->
+      let () = Queue.iter ~f:(fun x -> update x) msgs in
+      schedule reader update
   ;;
 end
 

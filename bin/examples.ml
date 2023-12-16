@@ -1,6 +1,6 @@
 open Ewe
 
-module Counter : App.Component = struct
+module Counter : Component.T = struct
   module Model = struct
     type t = int
   end
@@ -39,14 +39,14 @@ module Counter : App.Component = struct
   let subscriptions (key : Events.Key.t) =
     let open Action in
     match key with
-    | A -> Sub.Cmd Increment
-    | D -> Sub.Cmd Decrement
+    | A -> Sub.Msg Increment
+    | D -> Sub.Msg Decrement
     | Q -> Sub.Quit
     | _ -> Sub.Nil
   ;;
 end
 
-module Neofetch : App.Component = struct
+module Neofetch : Component.T = struct
   module Model = struct
     type t = unit
   end

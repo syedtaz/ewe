@@ -71,7 +71,7 @@ module Term = struct
     erase_screen ();
     scursor ();
     exit 0
-    ;;
+  ;;
 end
 
 include Term

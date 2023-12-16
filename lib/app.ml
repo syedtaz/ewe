@@ -1,26 +1,6 @@
-module type Component = sig
-  module Model : sig
-    type t
-  end
-
-  module Action : sig
-    type t
-
-    val apply : t -> Model.t -> Model.t
-  end
-
-  val view
-    :  (Model.t, 'a) Incremental.t
-    -> (Action.t -> unit)
-    -> (Vdom.t, 'a) Incremental.t
-
-  val initial_model : unit -> Model.t
-  val subscriptions : Events.Key.t -> Action.t Sub.t
-end
-
 module St = Incremental.Make ()
 
-module Make (C : Component) = struct
+module Make (C : Component.T) = struct
   let start ~name =
     let run st =
       let open Incremental in
@@ -35,18 +15,14 @@ module Make (C : Component) = struct
       in
       let _ = observe update_incr in
       stabilize st;
-      let open Async in
-      let eventr, eventw = Pipe.create () in
-      let updatef msg =
-        Var.set model (C.Action.apply msg (Var.latest_value model));
+      let update msg =
+        let () = Var.set model (C.Action.apply msg (Var.latest_value model)) in
         stabilize st
       in
-      Sub.start updatef C.subscriptions ~reader:eventr ~writer:eventw
+      Sub.start ~decoder:C.subscriptions ~update
     in
     let _ = Term.startup name in
     run St.State.t;
     Core.never_returns (Async.Scheduler.go ())
   ;;
 end
-
-(* V *)
