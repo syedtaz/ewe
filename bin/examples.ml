@@ -35,16 +35,14 @@ module Counter : App.Component = struct
   ;;
 
   let initial_model () = 1
+  let temp_subchars = [ 'a'; 'd' ]
 
-  let temp_subchars = ['a'; 'd']
-
-  let subscriptions (key : Events.Signals.World.key) =
+  let subscriptions (key : Events.Key.t) =
     let open Action in
     match key with
     | A -> Sub.Cmd Increment
-    | B -> Sub.Cmd Decrement
+    | D -> Sub.Cmd Decrement
     | _ -> Sub.Nil
-
   ;;
 end
 

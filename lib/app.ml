@@ -16,7 +16,7 @@ module type Component = sig
 
   val initial_model : unit -> Model.t
   val temp_subchars : char list
-  val subscriptions : Events.Signals.World.key -> Action.t Sub.t
+  val subscriptions : Events.Key.t -> Action.t Sub.t
 end
 
 module Run (C : Component) = struct
@@ -36,18 +36,14 @@ module Run (C : Component) = struct
     in
     let _ = observe update_incr in
     stabilize st;
-    let open Async in (
+    let open Async in
     let eventr, eventw = Pipe.create () in
-    Sub.on_keypress C.subscriptions C.temp_subchars eventw;
-    let rec loop () =
-    Pipe.read' eventr >>= fun x -> match x with
-      | `Eof -> loop ()
-      | `Ok msg -> (
-        let apply event = match event with
-          | Sub.Cmd msg -> Var.set model (C.Action.apply msg (Var.latest_value model))
-          | Sub.Nil -> ()
-      in
-      Queue.iter msg ~f:apply; loop ())
-    in ignore (loop ()))
+    let updatef msg =
+      Var.set model (C.Action.apply msg (Var.latest_value model));
+      stabilize st
+    in
+    Sub.start updatef C.subscriptions ~reader:eventr ~writer:eventw
   ;;
 end
+
+(* V *)

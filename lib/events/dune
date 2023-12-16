@@ -1,6 +1,6 @@
 (library
  (name events)
- (libraries incremental core async)
+ (libraries incremental core async runtime)
  (inline_tests)
  (preprocess
   (pps
