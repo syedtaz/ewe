@@ -1,6 +1,6 @@
 open Ewe
 
-module Counter = struct
+module Counter : App.Component = struct
   module Model = struct
     type t = int
   end
@@ -36,12 +36,15 @@ module Counter = struct
 
   let initial_model () = 1
 
-  let mapping (key : Keyboard.key) =
+  let temp_subchars = ['a'; 'd']
+
+  let subscriptions (key : Events.Signals.World.key) =
     let open Action in
     match key with
-    | A -> Some Increment
-    | B -> Some Decrement
-    | _ -> None
+    | A -> Sub.Cmd Increment
+    | B -> Sub.Cmd Decrement
+    | _ -> Sub.Nil
+
   ;;
 end
 

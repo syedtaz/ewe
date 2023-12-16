@@ -1,5 +1,3 @@
-open Async
-
 module Termutils = struct
   external c_tsize : unit -> int = "tsize" [@@noalloc]
 
@@ -10,18 +8,18 @@ module Termutils = struct
   ;;
 
   (** [hcursor] hides the cursor. *)
-  let hcursor writer = Writer.write writer "\x1b[?25l"
+  let hcursor () = Runtime.Io.write_out "\x1b[?25l"
 
   let rgb r g b = Format.sprintf "\x1b[38;2;%d;%d;%dm" r g b
   let clearfmt = "\x1b[0m"
 
   (** [scursor] shows the cursor. *)
-  let scursor writer = Writer.write writer "\x1b[?25h"
+  let scursor () = Runtime.Io.write_out "\x1b[?25h"
 
   (** [delete] moves the cursor one column back. *)
   let delete = "\x1b[1D"
 
-  let erase_screen writer = Writer.write writer "\x1b[2J"
+  let erase_screen () = Runtime.Io.write_out "\x1b[2J"
 
   (** [erasel_till_cursor] clears the current line from the starting column upto the cursor. *)
   let erasel_till_cursor = "\x1b[1K"
@@ -42,10 +40,7 @@ module Termutils = struct
     let save_window_name = "\x1b[22;0t"
     let set_window_name v = Format.sprintf "\x1b]0;%s\007" v
     let restore_window_name = "\x1b[23;0t"
-
-    let save_and_set writer name =
-      Writer.write writer (save_window_name ^ set_window_name name)
-    ;;
+    let save_and_set name = Runtime.Io.write_out (save_window_name ^ set_window_name name)
   end
 end
 
