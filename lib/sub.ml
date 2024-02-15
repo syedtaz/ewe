@@ -26,7 +26,7 @@ module Sub = struct
     let signalr, signalw = Pipe.create () in
     let () = don't_wait_for (keypress_aux key_decoder keyw) in
     let () = signal_aux signals signal_decoder signalw in
-    let () = don't_wait_for (schedule (interleave [ keyr; signalr]) update) in
+    let () = don't_wait_for (schedule (interleave [ keyr; signalr ]) update) in
     ()
 
   and keypress_aux f keyw =
@@ -43,11 +43,12 @@ module Sub = struct
        | Quit -> Term.shutdown ())
 
   and signal_aux signals signal_decoder signalw =
-    let handler signal = (match signal_decoder signal with
+    let handler signal =
+      match signal_decoder signal with
       | Msg v -> ignore (Pipe.write signalw v)
       | Nil -> ()
       | Quit -> Term.shutdown ()
-    ) in
+    in
     Signal.handle signals ~f:handler
 
   and schedule (reader : 'a Pipe.Reader.t) update =

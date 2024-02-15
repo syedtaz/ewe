@@ -36,22 +36,23 @@ module Counter : Component.T = struct
 
   let initial_model () = 1
 
-  let keypress_handler (key : Events.Key.t) = match key with
-    | A -> Sub.Msg Action.Increment
+  let keypress_handler (key : Events.Key.t) =
+    match key with
     | D -> Sub.Msg Action.Decrement
     | Q -> Sub.Quit
     | _ -> Sub.Nil
-
-  let signal_handler (signal : Core.Signal.t) = match signal with
-    | s when s = Core.Signal.of_caml_int 28 -> Sub.Quit
-    | _ -> Sub.Nil
-
-  let subscriptions = (keypress_handler, ([Core.Signal.of_caml_int 28], signal_handler))
-
   ;;
+
+  let signal_handler (signal : Core.Signal.t) =
+    match signal with
+    | s when s = Core.Signal.of_caml_int 28 -> Sub.Msg Action.Increment
+    | _ -> Sub.Nil
+  ;;
+
+  let subscriptions = keypress_handler, ([ Core.Signal.of_caml_int 28 ], signal_handler)
 end
 
-module Neofetch = struct
+module Neofetch : Component.T = struct
   module Model = struct
     type t = unit
   end
@@ -111,7 +112,13 @@ module Neofetch = struct
 
   let initial_model () = ()
 
-  let subscriptions = function
-    | _ -> Sub.Nil
+  let subscriptions =
+    let keypress_handler = function
+      | _ -> Sub.Nil
+    in
+    let signal_handler = function
+      | _ -> Sub.Nil
+    in
+    keypress_handler, ([], signal_handler)
   ;;
 end
